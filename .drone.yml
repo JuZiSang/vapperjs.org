@@ -24,7 +24,7 @@ steps:
       repo: juzisang/vapperjs.org
       tags: sha-${DRONE_COMMIT_SHA:0:8}
 
-  - name: 部署服务
+  - name: deploy
     image: appleboy/drone-ssh:1.5.5
     settings:
       host:

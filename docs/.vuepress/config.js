@@ -1,7 +1,7 @@
 const { resolve } = require('path')
 
 module.exports = {
-  base: '.',
+  base: '/',
   locales: {
     '/': {
       lang: 'en-US',
