@@ -12,7 +12,6 @@ steps:
     commands:
       - npm install
       - npm run build
-      - rm -rf ./node_modules
 
   - name: publish
     image: plugins/docker
