@@ -1,0 +1,55 @@
+kind: pipeline
+type: docker
+name: vapperjs.org
+
+trigger:
+  branch:
+    - master
+
+steps:
+  - name: build
+    image: node:14.16.1-alpine
+    commands:
+      - npm install
+      - npm run build
+      - rm -rf ./node_modules
+
+  - name: publish
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: juzisang/vapperjs.org
+      tags: sha-${DRONE_COMMIT_SHA:0:8}
+
+  - name: 部署服务
+    image: appleboy/drone-ssh:1.5.5
+    settings:
+      host:
+        from_secret: ssh_host
+      port: 22
+      username: ubuntu
+      key:
+        from_secret: ssh_key
+      script:
+        - sed -i 's/vapperjs.org:sha-[0-9a-z]\{8\}/vapperjs.org:sha-${DRONE_COMMIT_SHA:0:8}/' ./sites-manage/vapperjs-compose.yml
+        - sudo docker stack deploy -c ./sites-manage/vapperjs-compose.yml vapperjs
+        - cd ./sites-manage
+        - git add .
+        - git commit -m 'vapperjs.org:sha-${DRONE_COMMIT_SHA:0:8}'
+        - git push
+
+  - name: notify
+    image: yakumioto/drone-serverchan
+    settings:
+      key:
+        from_secret: serverchan_key
+      text: ${DRONE_REPO} publish
+      desp: |
+        项目名：${DRONE_REPO}
+        项目地址：${DRONE_GIT_HTTP_URL}
+        访问地址：https://vapperjs.juzisang.top/ 
+        版本：vapperjs.org:sha-${DRONE_COMMIT_SHA:0:8}
+        提交消息：${DRONE_COMMIT_MESSAGE}
